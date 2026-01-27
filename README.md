@@ -58,8 +58,6 @@ Same as RTX 40-series (stable PyTorch + CUDA 12.4).
 
 ---
 
-## For AI Coding Agents
-
 **To set up WhisperDictation on any Windows 11 system:**
 
 1. Clone to `C:\WhisperDictation`
