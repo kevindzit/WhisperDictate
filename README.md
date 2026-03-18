@@ -1,8 +1,12 @@
 # WhisperDictate
 
-A fast, GPU-accelerated voice-to-text dictation tool using OpenAI's Whisper. Hold a hotkey to record, release to transcribe and paste.
+Voice-to-text dictation for Windows. Hold a hotkey, speak, release — your words get transcribed and pasted at the cursor.
 
-## Quick Start (Windows 11)
+Uses [faster-whisper](https://github.com/SYSTRAN/faster-whisper) with the `distil-large-v3.5` model and Silero VAD for fast, accurate English transcription on any NVIDIA GPU.
+
+## Setup
+
+Requires Windows, Python 3.12+, and an NVIDIA GPU (CPU works but is slow).
 
 ```powershell
 git clone https://github.com/kevin36776/WhisperDictate.git C:\WhisperDictation
@@ -11,85 +15,32 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 .\setup.ps1
 ```
 
-The setup script auto-detects your GPU and installs everything. WhisperDictation will start automatically on boot.
+The script installs everything and adds WhisperDictation to Windows Startup. First launch downloads the model (~1.5 GB).
 
-## Hotkey
+## Usage
 
-| Hotkey | Action |
+| Action | Hotkey |
 |--------|--------|
-| **Hold Ctrl+Alt** | Start recording |
-| **Release** | Transcribe and paste at cursor |
+| Record | Hold **Ctrl+Alt** |
+| Transcribe + paste | Release |
 
----
+Right-click the system tray icon to reset hotkeys or exit.
 
-## Hardware Configurations
+## Models
 
-### Desktop: RTX 5080 / RTX 50-series
+The default is `distil-large-v3.5` — the fastest accurate option for English. To change models, edit the model name in `dictation_app.py` line 22.
 
-```powershell
-# The setup.ps1 script auto-detects and runs:
-pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128
-```
+| VRAM | Model | Notes |
+|------|-------|-------|
+| ~4 GB | `deepdml/faster-distil-whisper-large-v3.5` | **Default.** Fastest + accurate, English only |
+| ~4 GB | `deepdml/faster-whisper-large-v3-turbo-ct2` | Fast, multilingual |
+| ~10 GB | `Systran/faster-whisper-large-v3` | Slower, highest accuracy, multilingual |
+| ~2 GB | `small` | Limited VRAM or CPU |
 
-| Setting | Value |
-|---------|-------|
-| PyTorch | **Nightly** (required for sm_120) |
-| CUDA | 12.8 |
-| Model | `turbo` |
-| VRAM | ~6GB |
+## Troubleshooting
 
-### Laptop: RTX 4060 / RTX 40-series
-
-```powershell
-# The setup.ps1 script auto-detects and runs:
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
-```
-
-| Setting | Value |
-|---------|-------|
-| PyTorch | **Stable** |
-| CUDA | 12.4 |
-| Model | `turbo` |
-| VRAM | ~6GB |
-
-### RTX 30-series / RTX 20-series
-
-Same as RTX 40-series (stable PyTorch + CUDA 12.4).
-
----
-
-**To set up WhisperDictation on any Windows 11 system:**
-
-1. Clone to `C:\WhisperDictation`
-2. Run `.\setup.ps1` as Administrator
-
-The script handles everything:
-- Installs Python 3.12 + FFmpeg via winget
-- Detects GPU generation from `RTX 50xx` / `RTX 40xx` / `RTX 30xx` patterns
-- Installs correct PyTorch (nightly for 50-series, stable for others)
-- Creates `dictate-env` virtual environment
-- Adds to Windows Startup
-
-**Key detection logic in setup.ps1:**
-- `RTX 50xx` → PyTorch Nightly + CUDA 12.8 (Blackwell needs nightly)
-- `RTX 40xx` → PyTorch Stable + CUDA 12.4
-- `RTX 30xx` → PyTorch Stable + CUDA 12.4
-- `RTX 20xx` → PyTorch Stable + CUDA 12.4
-- No NVIDIA → CPU fallback
-
-See [SETUP.md](SETUP.md) for detailed manual instructions.
-
----
-
-## Files
-
-| File | Description |
-|------|-------------|
-| `setup.ps1` | Automated setup (run this) |
-| `dictation_app.py` | Main application |
-| `run_whisper_dictation.vbs` | Silent launcher for Windows Startup |
-| `SETUP.md` | Detailed setup documentation |
+See [SETUP.md](SETUP.md) for manual setup steps and common fixes.
 
 ## License
 
-MIT License
+MIT

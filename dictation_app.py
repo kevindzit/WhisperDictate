@@ -6,7 +6,7 @@ import pyaudio
 import wave
 import numpy as np
 import pyperclip
-import whisper
+from faster_whisper import WhisperModel
 import torch
 import pystray
 from PIL import Image, ImageDraw
@@ -16,9 +16,10 @@ import tempfile
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 
-# Load the turbo model - 6x faster than large-v3 with similar quality
-# Uses only ~6GB VRAM, perfect for RTX 5080
-model = whisper.load_model("turbo", device=device)
+# Load distil-large-v3.5 via faster-whisper (CTranslate2 backend)
+# Faster than turbo, slightly more accurate on short audio, English-optimized
+compute_type = "float16" if device == "cuda" else "float32"
+model = WhisperModel("deepdml/faster-distil-whisper-large-v3.5", device=device, compute_type=compute_type)
 
 recording = False
 audio_frames = []
@@ -49,34 +50,36 @@ def stop_recording():
     if recording:
         recording = False
         print("Recording stopped, transcribing...")
-        
+
         time.sleep(0.5)
-        
+
         if audio_frames:
             temp_file = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
             temp_file_name = temp_file.name
             temp_file.close()
-            
+
             with wave.open(temp_file_name, 'wb') as wf:
                 wf.setnchannels(CHANNELS)
                 wf.setsampwidth(p.get_sample_size(FORMAT))
                 wf.setframerate(RATE)
                 wf.writeframes(b''.join(audio_frames))
-            
-            # Transcribe with fp16 for GPU acceleration and specify English
-            result = model.transcribe(
+
+            # Transcribe with faster-whisper: VAD trims silence, initial_prompt aids accuracy
+            segments, info = model.transcribe(
                 temp_file_name,
                 language="en",
-                fp16=(device == "cuda")  # Use fp16 on GPU for speed
+                beam_size=5,
+                vad_filter=True,
+                initial_prompt="Dictated text.",
             )
-            text = result["text"].strip()
-            
+            text = " ".join(segment.text.strip() for segment in segments).strip()
+
             pyperclip.copy(text)
-            
+
             os.unlink(temp_file_name)
-            
+
             print(f"Transcribed: {text}")
-            
+
             keyboard.press_and_release('ctrl+v')
 
 def record_audio():
@@ -85,12 +88,12 @@ def record_audio():
                    rate=RATE,
                    input=True,
                    frames_per_buffer=CHUNK)
-    
+
     global recording, audio_frames
     while recording:
         data = stream.read(CHUNK)
         audio_frames.append(data)
-    
+
     stream.stop_stream()
     stream.close()
 
@@ -141,10 +144,11 @@ def main():
         pystray.MenuItem("Exit", on_exit)
     )
     icon.title = "Whisper Dictation"
-    
+
     print("Whisper Dictation started!")
-    print("  Model: turbo (large-v3-turbo)")
-    print(f"  Device: {device}")
+    print("  Model: distil-large-v3.5 (faster-whisper)")
+    print(f"  Device: {device} ({compute_type})")
+    print("  VAD: enabled")
     print("  Hotkey: Hold Ctrl+Alt to record")
     icon.run()
 
