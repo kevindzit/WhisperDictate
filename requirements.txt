@@ -1,4 +1,6 @@
 faster-whisper>=1.1.0
+nvidia-cublas-cu12
+nvidia-cudnn-cu12
 PyAudio==0.2.14
 keyboard==0.13.5
 numpy>=1.20.0
