@@ -9,7 +9,7 @@ Uses [faster-whisper](https://github.com/SYSTRAN/faster-whisper) with the `disti
 Requires Windows, Python 3.12+, and an NVIDIA GPU (CPU works but is slow).
 
 ```powershell
-git clone https://github.com/kevin36776/WhisperDictate.git C:\WhisperDictation
+git clone https://github.com/kevindzit/WhisperDictate.git C:\WhisperDictation
 cd C:\WhisperDictation
 Set-ExecutionPolicy Bypass -Scope Process -Force
 .\setup.ps1
