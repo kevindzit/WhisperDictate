@@ -37,6 +37,7 @@ whisp/
 
 # Project
 logs/
+model.txt
 
 # OS
 .DS_Store

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import time
 import threading
 import keyboard
@@ -12,14 +13,27 @@ import pystray
 from PIL import Image, ImageDraw
 import tempfile
 
+MODEL_NAMES = {
+    "distil-large-v3.5": "deepdml/faster-distil-whisper-large-v3.5",
+    "turbo": "turbo",
+    "large-v3": "large-v3",
+    "small": "small",
+}
+model_name = "distil-large-v3.5"
+model_path = Path(__file__).resolve().with_name("model.txt")
+if model_path.exists():
+    model_name = model_path.read_text(encoding="utf-8-sig").strip().lower()
+if model_name not in MODEL_NAMES:
+    raise ValueError("model.txt must contain one of: " + ", ".join(MODEL_NAMES))
+
 # Use GPU if available (CUDA), otherwise fallback to CPU
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
+print(f"Using model: {model_name}")
 
-# Load distil-large-v3.5 via faster-whisper (CTranslate2 backend)
-# Faster than turbo, slightly more accurate on short audio, English-optimized
+# Load the model selected during setup
 compute_type = "float16" if device == "cuda" else "float32"
-model = WhisperModel("deepdml/faster-distil-whisper-large-v3.5", device=device, compute_type=compute_type)
+model = WhisperModel(MODEL_NAMES[model_name], device=device, compute_type=compute_type)
 
 recording = False
 audio_frames = []
@@ -146,7 +160,7 @@ def main():
     icon.title = "Whisper Dictation"
 
     print("Whisper Dictation started!")
-    print("  Model: distil-large-v3.5 (faster-whisper)")
+    print(f"  Model: {model_name} (faster-whisper)")
     print(f"  Device: {device} ({compute_type})")
     print("  VAD: enabled")
     print("  Hotkey: Hold Ctrl+Alt to record")
