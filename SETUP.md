@@ -15,7 +15,20 @@ The script:
 2. Creates a virtual environment (`dictate-env/`)
 3. Detects your GPU and installs the correct PyTorch + CUDA
 4. Installs all dependencies
-5. Adds WhisperDictation to Windows Startup
+5. Verifies `faster_whisper` and saves the selected model in `model.txt`
+6. Adds WhisperDictation to Windows Startup
+
+The default model is `distil-large-v3.5`. Other supported choices are `turbo`,
+`large-v3`, and `small`:
+
+```powershell
+.\setup.ps1 -Model "turbo"
+```
+
+Setup stops if an installation command or dependency verification fails.
+Verification checks Python imports. First launch still downloads and loads the
+selected model. Exit any running copy of the app before restarting it with a new
+model choice.
 
 ## Manual Setup
 
@@ -58,7 +71,19 @@ pip install torch torchvision torchaudio
 pip install -r requirements.txt
 ```
 
-### 5. Startup (optional)
+### 5. Model Selection
+
+From the project folder, save one of the supported model names:
+
+```powershell
+Set-Content -Path .\model.txt -Value "distil-large-v3.5" -Encoding UTF8
+```
+
+Use `turbo`, `large-v3`, or `small` to choose a different model. Without this file,
+the app uses `distil-large-v3.5`. The app reads the file beside `dictation_app.py`,
+even when launched from another working directory.
+
+### 6. Startup (optional)
 
 ```powershell
 $WshShell = New-Object -ComObject WScript.Shell
@@ -68,13 +93,24 @@ $Shortcut.WorkingDirectory = "C:\WhisperDictation"
 $Shortcut.Save()
 ```
 
-### 6. Test
+### 7. Test
 
 ```powershell
 .\dictate-env\Scripts\python.exe dictation_app.py
 ```
 
+Check the `Using model:` line in the console or `logs/whisper_dictation.log`.
+After changing `model.txt`, exit from the system tray and restart the app.
+
 ## Troubleshooting
+
+**Wrong model starts**: Check `model.txt` beside the app, then exit and restart
+the running copy. Valid choices are `distil-large-v3.5`, `turbo`, `large-v3`, and
+`small`. An empty or unsupported value stops startup with a clear error.
+
+**Dependency verification failed**: Read the Python error above the setup failure.
+The required backend is `faster_whisper`, installed by `requirements.txt`.
+Installing the separate `whisper` package does not satisfy this check.
 
 **"CUDA not available"** — Check that NVIDIA drivers are installed (`nvidia-smi`). Reinstall PyTorch with the correct CUDA version for your GPU.
 
@@ -91,6 +127,7 @@ C:\WhisperDictation\
 ├── dictate-env/                   # Virtual environment
 ├── logs/                          # Application logs
 ├── dictation_app.py               # Main application
+├── model.txt                      # Local model choice, created by setup
 ├── requirements.txt               # Dependencies
 ├── setup.ps1                      # Automated setup
 ├── run_whisper_dictation.bat      # Console launcher
